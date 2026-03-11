@@ -1,0 +1,156 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://personaspec.org/schema/1.0/persona.schema.json",
+  "title": "Persona Spec",
+  "description": "The open standard for portable AI personas",
+  "type": "object",
+  "required": ["version", "meta", "identity", "voice", "context", "rules"],
+  "properties": {
+    "version": {
+      "type": "string",
+      "description": "Spec version",
+      "enum": ["1.0"]
+    },
+    "meta": {
+      "type": "object",
+      "required": ["id", "created", "visibility"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier in kebab-case",
+          "pattern": "^[a-z0-9-]+$"
+        },
+        "created": {
+          "type": "string",
+          "description": "ISO 8601 creation date",
+          "format": "date"
+        },
+        "updated": {
+          "type": "string",
+          "description": "ISO 8601 last updated date",
+          "format": "date"
+        },
+        "visibility": {
+          "type": "string",
+          "enum": ["public", "private"]
+        }
+      }
+    },
+    "identity": {
+      "type": "object",
+      "required": ["name"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "location": {
+          "type": "string"
+        },
+        "tagline": {
+          "type": "string"
+        },
+        "avatar": {
+          "type": "string",
+          "format": "uri"
+        },
+        "links": {
+          "type": "object",
+          "properties": {
+            "linkedin": { "type": "string", "format": "uri" },
+            "github": { "type": "string", "format": "uri" },
+            "twitter": { "type": "string", "format": "uri" },
+            "website": { "type": "string", "format": "uri" },
+            "email": { "type": "string", "format": "email" }
+          }
+        }
+      }
+    },
+    "voice": {
+      "type": "object",
+      "required": ["tone", "style"],
+      "properties": {
+        "tone": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Comma separated tone descriptors"
+        },
+        "style": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Communication style guidelines"
+        },
+        "examples": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["prompt", "response"],
+            "properties": {
+              "prompt": { "type": "string" },
+              "response": { "type": "string" }
+            }
+          }
+        }
+      }
+    },
+    "context": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["type", "entries"],
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": ["experience", "skills", "stories", "education", "projects"]
+          },
+          "entries": {
+            "type": "array"
+          }
+        }
+      }
+    },
+    "rules": {
+      "type": "object",
+      "required": ["privacy"],
+      "properties": {
+        "privacy": {
+          "type": "object",
+          "properties": {
+            "hide_phone": { "type": "boolean" },
+            "hide_address": { "type": "boolean" },
+            "hide_system_prompt": { "type": "boolean" }
+          }
+        },
+        "blocked_topics": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "allowed_topics": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "behaviors": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "cta": {
+          "type": "string"
+        }
+      }
+    },
+    "personas": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "label", "active"],
+        "properties": {
+          "id": { "type": "string" },
+          "label": { "type": "string" },
+          "description": { "type": "string" },
+          "active": { "type": "boolean" },
+          "overrides": { "type": "object" }
+        }
+      }
+    }
+  }
+}
