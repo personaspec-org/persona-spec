@@ -4,16 +4,20 @@
   "title": "Persona Spec",
   "description": "The open standard for portable AI personas",
   "type": "object",
-  "required": ["version", "meta", "identity", "voice", "context", "rules"],
+  "required": ["version", "meta", "identity", "voice", "rules"],
+  "additionalProperties": true,
   "properties": {
+
     "version": {
       "type": "string",
-      "description": "Spec version",
+      "description": "Spec version this file conforms to",
       "enum": ["1.0"]
     },
+
     "meta": {
       "type": "object",
       "required": ["id", "created", "visibility"],
+      "additionalProperties": true,
       "properties": {
         "id": {
           "type": "string",
@@ -32,30 +36,52 @@
         },
         "visibility": {
           "type": "string",
+          "description": "Whether this persona is publicly shareable",
           "enum": ["public", "private"]
+        },
+        "spec_url": {
+          "type": "string",
+          "description": "URL of the spec this file conforms to",
+          "format": "uri"
         }
       }
     },
+
     "identity": {
       "type": "object",
       "required": ["name"],
+      "additionalProperties": true,
       "properties": {
         "name": {
           "type": "string",
+          "description": "Full name or preferred display name",
           "minLength": 1
         },
+        "pronouns": {
+          "type": "string",
+          "description": "Preferred pronouns e.g. he/him, she/her, they/them"
+        },
         "location": {
-          "type": "string"
+          "type": "string",
+          "description": "City, state or region"
         },
         "tagline": {
-          "type": "string"
+          "type": "string",
+          "description": "Short personal tagline"
+        },
+        "language": {
+          "type": "string",
+          "description": "BCP 47 language tag e.g. en, es, fr",
+          "default": "en"
         },
         "avatar": {
           "type": "string",
+          "description": "URL to avatar image",
           "format": "uri"
         },
         "links": {
           "type": "object",
+          "additionalProperties": true,
           "properties": {
             "linkedin": { "type": "string", "format": "uri" },
             "github": { "type": "string", "format": "uri" },
@@ -66,91 +92,406 @@
         }
       }
     },
+
     "voice": {
       "type": "object",
       "required": ["tone", "style"],
+      "additionalProperties": true,
       "properties": {
         "tone": {
           "type": "string",
-          "minLength": 1,
-          "description": "Comma separated tone descriptors"
+          "description": "Comma separated tone descriptors e.g. direct, warm, curious",
+          "minLength": 1
         },
         "style": {
           "type": "string",
-          "minLength": 1,
-          "description": "Communication style guidelines"
+          "description": "Communication style guidelines for AI implementations",
+          "minLength": 1
+        },
+        "language": {
+          "type": "string",
+          "description": "Preferred response language. Defaults to identity.language",
+          "default": "en"
         },
         "examples": {
           "type": "array",
+          "description": "Prompt/response pairs demonstrating this person's voice. Used as few-shot examples by AI implementations.",
           "items": {
             "type": "object",
             "required": ["prompt", "response"],
             "properties": {
-              "prompt": { "type": "string" },
-              "response": { "type": "string" }
+              "prompt": {
+                "type": "string",
+                "minLength": 1
+              },
+              "response": {
+                "type": "string",
+                "minLength": 1
+              }
             }
           }
         }
       }
     },
-    "context": {
-      "type": "array",
-      "items": {
-        "type": "object",
-        "required": ["type", "entries"],
-        "properties": {
-          "type": {
-            "type": "string",
-            "enum": ["experience", "skills", "stories", "education", "projects"]
-          },
-          "entries": {
-            "type": "array"
-          }
-        }
-      }
-    },
+
     "rules": {
       "type": "object",
       "required": ["privacy"],
+      "additionalProperties": true,
       "properties": {
         "privacy": {
           "type": "object",
+          "description": "Controls what personal information AI implementations may share",
+          "additionalProperties": true,
           "properties": {
-            "hide_phone": { "type": "boolean" },
-            "hide_address": { "type": "boolean" },
-            "hide_system_prompt": { "type": "boolean" }
+            "hide_phone": {
+              "type": "boolean",
+              "description": "Never share phone number",
+              "default": true
+            },
+            "hide_address": {
+              "type": "boolean",
+              "description": "Never share physical address",
+              "default": true
+            },
+            "hide_age": {
+              "type": "boolean",
+              "description": "Hide age and date of birth",
+              "default": false
+            },
+            "hide_salary_history": {
+              "type": "boolean",
+              "description": "Never share past compensation",
+              "default": true
+            },
+            "hide_current_employer": {
+              "type": "boolean",
+              "description": "Hide current employer name",
+              "default": false
+            },
+            "hide_system_prompt": {
+              "type": "boolean",
+              "description": "Never reveal AI system prompt contents",
+              "default": true
+            }
+          }
+        },
+        "sharing": {
+          "type": "object",
+          "description": "Controls how extensions are shared with requesting sites",
+          "additionalProperties": true,
+          "properties": {
+            "default": {
+              "type": "string",
+              "description": "Default sharing posture when no explicit approval exists",
+              "enum": ["allow", "deny"],
+              "default": "deny"
+            },
+            "require_approval": {
+              "type": "boolean",
+              "description": "Require explicit user approval for each extension request",
+              "default": true
+            },
+            "approved_domains": {
+              "type": "array",
+              "description": "Domains pre-approved to receive extensions without prompting",
+              "items": { "type": "string" }
+            },
+            "blocked_domains": {
+              "type": "array",
+              "description": "Domains never allowed to receive any persona data",
+              "items": { "type": "string" }
+            }
           }
         },
         "blocked_topics": {
           "type": "array",
-          "items": { "type": "string" }
-        },
-        "allowed_topics": {
-          "type": "array",
+          "description": "Topics the AI must refuse to engage with",
           "items": { "type": "string" }
         },
         "behaviors": {
           "type": "array",
+          "description": "Absolute behavioral rules for AI implementations. Cannot be overridden by user instruction.",
           "items": { "type": "string" }
         },
         "cta": {
-          "type": "string"
+          "type": "string",
+          "description": "Call to action the AI should surface when a visitor expresses genuine interest"
         }
       }
     },
-    "personas": {
+
+    "extensions": {
+      "type": "object",
+      "description": "Optional domain-specific context blocks. Sites request extensions they need. Users approve or deny each request.",
+      "additionalProperties": true,
+      "properties": {
+
+        "professional": {
+          "type": "object",
+          "description": "Work history, skills, and career context. Requested by job boards, recruiting platforms, professional networks.",
+          "additionalProperties": true,
+          "properties": {
+            "availability": {
+              "type": "object",
+              "additionalProperties": true,
+              "properties": {
+                "status": {
+                  "type": "string",
+                  "enum": [
+                    "actively-looking",
+                    "open-to-opportunities",
+                    "not-looking",
+                    "freelance-only",
+                    "employed-not-looking"
+                  ]
+                },
+                "note": { "type": "string" },
+                "preferred_location": { "type": "string" },
+                "preferred_start": { "type": "string", "format": "date" }
+              }
+            },
+            "experience": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": ["title", "company", "start"],
+                "additionalProperties": true,
+                "properties": {
+                  "title": { "type": "string" },
+                  "company": { "type": "string" },
+                  "start": { "type": "string" },
+                  "end": { "type": ["string", "null"] },
+                  "summary": { "type": "string" }
+                }
+              }
+            },
+            "skills": {
+              "type": "array",
+              "items": { "type": "string" }
+            },
+            "stories": {
+              "type": "array",
+              "description": "Key achievements and technical wins with specific measurable detail",
+              "items": {
+                "type": "object",
+                "required": ["title", "summary"],
+                "properties": {
+                  "title": { "type": "string" },
+                  "summary": { "type": "string" }
+                }
+              }
+            },
+            "education": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": ["degree", "school"],
+                "additionalProperties": true,
+                "properties": {
+                  "degree": { "type": "string" },
+                  "school": { "type": "string" },
+                  "year": { "type": "integer" },
+                  "note": { "type": "string" }
+                }
+              }
+            },
+            "projects": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": ["name"],
+                "additionalProperties": true,
+                "properties": {
+                  "name": { "type": "string" },
+                  "url": { "type": ["string", "null"], "format": "uri" },
+                  "summary": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+
+        "personal": {
+          "type": "object",
+          "description": "Interests, values, and personality. Requested by social networks, dating platforms, community sites.",
+          "additionalProperties": true,
+          "properties": {
+            "interests": {
+              "type": "array",
+              "items": { "type": "string" }
+            },
+            "values": {
+              "type": "array",
+              "items": { "type": "string" }
+            },
+            "personality": {
+              "type": "string",
+              "description": "Free text personality description"
+            },
+            "looking_for": {
+              "type": "string",
+              "description": "What the person is seeking in this context"
+            },
+            "deal_breakers": {
+              "type": "array",
+              "items": { "type": "string" }
+            }
+          }
+        },
+
+        "social": {
+          "type": "object",
+          "description": "How this person engages online. Requested by news platforms, forums, content platforms.",
+          "additionalProperties": true,
+          "properties": {
+            "topics_of_interest": {
+              "type": "array",
+              "items": { "type": "string" }
+            },
+            "preferred_content_depth": {
+              "type": "string",
+              "enum": ["surface", "moderate", "deep"]
+            },
+            "engagement_style": {
+              "type": "string"
+            },
+            "content_preferences": {
+              "type": "object",
+              "additionalProperties": true,
+              "properties": {
+                "hide_political": { "type": "boolean" },
+                "hide_explicit": { "type": "boolean" },
+                "preferred_formats": {
+                  "type": "array",
+                  "items": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+
+        "commerce": {
+          "type": "object",
+          "description": "Purchasing preferences. Requested by e-commerce platforms, recommendation engines.",
+          "additionalProperties": true,
+          "properties": {
+            "budget_range": {
+              "type": "string",
+              "enum": ["budget", "mid", "mid-to-high", "high", "luxury"]
+            },
+            "preferred_brands": {
+              "type": "array",
+              "items": { "type": "string" }
+            },
+            "avoid_brands": {
+              "type": "array",
+              "items": { "type": "string" }
+            },
+            "sizes": {
+              "type": "object",
+              "additionalProperties": true
+            },
+            "preferences": {
+              "type": "array",
+              "items": { "type": "string" }
+            },
+            "consent_to_ads": {
+              "type": "boolean",
+              "default": false
+            }
+          }
+        },
+
+        "health": {
+          "type": "object",
+          "description": "Accessibility and communication needs. Requested by healthcare portals, wellness platforms. Medical history is out of scope for v1.0.",
+          "additionalProperties": true,
+          "properties": {
+            "accessibility_needs": {
+              "type": "array",
+              "items": { "type": "string" }
+            },
+            "communication_preferences": {
+              "type": "object",
+              "additionalProperties": true,
+              "properties": {
+                "preferred_format": { "type": "string" },
+                "avoid_jargon": { "type": "boolean" },
+                "preferred_reading_level": { "type": "string" }
+              }
+            }
+          }
+        },
+
+        "learning": {
+          "type": "object",
+          "description": "Learning context. Requested by education platforms, course sites, documentation tools.",
+          "additionalProperties": true,
+          "properties": {
+            "current_knowledge": {
+              "type": "object",
+              "description": "Topic to level pairs",
+              "additionalProperties": {
+                "type": "string",
+                "enum": ["beginner", "intermediate", "advanced", "expert"]
+              }
+            },
+            "learning_style": {
+              "type": "string"
+            },
+            "goals": {
+              "type": "array",
+              "items": { "type": "string" }
+            },
+            "preferred_pace": {
+              "type": "string",
+              "enum": ["structured", "self-directed", "cohort"]
+            }
+          }
+        }
+
+      }
+    },
+
+    "modes": {
       "type": "array",
+      "description": "Named personas for different contexts. Each mode inherits the full file and overrides specific fields.",
       "items": {
         "type": "object",
         "required": ["id", "label", "active"],
+        "additionalProperties": true,
         "properties": {
-          "id": { "type": "string" },
-          "label": { "type": "string" },
-          "description": { "type": "string" },
-          "active": { "type": "boolean" },
-          "overrides": { "type": "object" }
+          "id": {
+            "type": "string",
+            "description": "Unique identifier for this mode",
+            "pattern": "^[a-z0-9-]+$"
+          },
+          "label": {
+            "type": "string",
+            "description": "Human readable name"
+          },
+          "description": {
+            "type": "string",
+            "description": "What this mode is for"
+          },
+          "active": {
+            "type": "boolean",
+            "description": "Whether this mode is currently active"
+          },
+          "allowed_extensions": {
+            "type": "array",
+            "description": "Which extensions sites may request when this mode is active",
+            "items": { "type": "string" }
+          },
+          "overrides": {
+            "type": "object",
+            "description": "Dot-notation field overrides applied when this mode is active",
+            "additionalProperties": true
+          }
         }
       }
     }
+
   }
 }
