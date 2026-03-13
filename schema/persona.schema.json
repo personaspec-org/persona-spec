@@ -1,133 +1,75 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "$id": "https://personaspec.org/schema/1.0/persona.schema.json",
-  "title": "Persona Spec",
-  "description": "The open standard for portable AI personas",
+  "$id": "https://personaspec.org/schema/v1/persona.schema.json",
+  "title": "Persona Interchange Format (PIF) v1.0",
+  "description": "JSON Schema for validating .persona files conforming to the Persona Interchange Format specification v1.0",
   "type": "object",
-  "required": ["version", "meta", "identity", "voice", "rules"],
+  "required": ["version", "identity"],
   "additionalProperties": true,
   "properties": {
 
     "version": {
       "type": "string",
-      "description": "Spec version this file conforms to",
+      "description": "PIF spec version this file conforms to",
       "enum": ["1.0"]
     },
 
     "meta": {
       "type": "object",
-      "required": ["id", "created", "visibility"],
+      "description": "File metadata",
       "additionalProperties": true,
       "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier in kebab-case",
-          "pattern": "^[a-z0-9-]+$"
-        },
-        "created": {
-          "type": "string",
-          "description": "ISO 8601 creation date",
-          "format": "date"
-        },
-        "updated": {
-          "type": "string",
-          "description": "ISO 8601 last updated date",
-          "format": "date"
-        },
-        "visibility": {
-          "type": "string",
-          "description": "Whether this persona is publicly shareable",
-          "enum": ["public", "private"]
-        },
-        "spec_url": {
-          "type": "string",
-          "description": "URL of the spec this file conforms to",
-          "format": "uri"
-        }
+        "spec":           { "type": "string", "format": "uri" },
+        "min_compatible": { "type": "string" },
+        "created":        { "type": "string", "format": "date" },
+        "updated":        { "type": "string", "format": "date" },
+        "username":       { "type": "string", "minLength": 3, "maxLength": 30, "pattern": "^[a-z0-9-]+$" },
+        "url":            { "type": "string", "format": "uri" },
+        "visibility":     { "type": "string", "enum": ["public", "private"] },
+        "api_enabled":    { "type": "boolean" }
       }
     },
 
     "identity": {
       "type": "object",
+      "description": "Core identity fields",
       "required": ["name"],
       "additionalProperties": true,
       "properties": {
-        "name": {
-          "type": "string",
-          "description": "Full name or preferred display name",
-          "minLength": 1
-        },
-        "pronouns": {
-          "type": "string",
-          "description": "Preferred pronouns e.g. he/him, she/her, they/them"
-        },
-        "location": {
-          "type": "string",
-          "description": "City, state or region"
-        },
-        "tagline": {
-          "type": "string",
-          "description": "Short personal tagline"
-        },
-        "language": {
-          "type": "string",
-          "description": "BCP 47 language tag e.g. en, es, fr",
-          "default": "en"
-        },
-        "avatar": {
-          "type": "string",
-          "description": "URL to avatar image",
-          "format": "uri"
-        },
-        "links": {
-          "type": "object",
-          "additionalProperties": true,
-          "properties": {
-            "linkedin": { "type": "string", "format": "uri" },
-            "github": { "type": "string", "format": "uri" },
-            "twitter": { "type": "string", "format": "uri" },
-            "website": { "type": "string", "format": "uri" },
-            "email": { "type": "string", "format": "email" }
-          }
-        }
+        "name":     { "type": "string", "minLength": 1, "maxLength": 100 },
+        "tagline":  { "type": "string", "maxLength": 200 },
+        "location": { "type": "string", "maxLength": 100 }
       }
     },
 
     "voice": {
       "type": "object",
-      "required": ["tone", "style"],
+      "description": "Communication style and voice examples",
       "additionalProperties": true,
       "properties": {
         "tone": {
           "type": "string",
-          "description": "Comma separated tone descriptors e.g. direct, warm, curious",
-          "minLength": 1
+          "enum": ["Casual", "Professional", "Formal", "Playful", "Direct", "Warm"]
         },
         "style": {
           "type": "string",
-          "description": "Communication style guidelines for AI implementations",
-          "minLength": 1
+          "enum": ["Concise", "Detailed", "Storyteller", "Analytical", "Conversational"]
         },
-        "language": {
+        "personality_narrative": {
           "type": "string",
-          "description": "Preferred response language. Defaults to identity.language",
-          "default": "en"
+          "maxLength": 1000,
+          "description": "AI-synthesized personality description. Private by default."
         },
         "examples": {
           "type": "array",
-          "description": "Prompt/response pairs demonstrating this person's voice. Used as few-shot examples by AI implementations.",
+          "description": "Voice examples as prompt/response pairs",
           "items": {
             "type": "object",
             "required": ["prompt", "response"],
+            "additionalProperties": false,
             "properties": {
-              "prompt": {
-                "type": "string",
-                "minLength": 1
-              },
-              "response": {
-                "type": "string",
-                "minLength": 1
-              }
+              "prompt":   { "type": "string", "minLength": 1 },
+              "response": { "type": "string", "minLength": 1 }
             }
           }
         }
@@ -136,236 +78,180 @@
 
     "rules": {
       "type": "object",
-      "required": ["privacy"],
+      "description": "Behavioral rules governing the persona",
       "additionalProperties": true,
       "properties": {
-        "privacy": {
-          "type": "object",
-          "description": "Controls what personal information AI implementations may share",
-          "additionalProperties": true,
-          "properties": {
-            "hide_phone": {
-              "type": "boolean",
-              "description": "Never share phone number",
-              "default": true
-            },
-            "hide_address": {
-              "type": "boolean",
-              "description": "Never share physical address",
-              "default": true
-            },
-            "hide_age": {
-              "type": "boolean",
-              "description": "Hide age and date of birth",
-              "default": false
-            },
-            "hide_salary_history": {
-              "type": "boolean",
-              "description": "Never share past compensation",
-              "default": true
-            },
-            "hide_current_employer": {
-              "type": "boolean",
-              "description": "Hide current employer name",
-              "default": false
-            },
-            "hide_system_prompt": {
-              "type": "boolean",
-              "description": "Never reveal AI system prompt contents",
-              "default": true
-            }
-          }
-        },
-        "sharing": {
-          "type": "object",
-          "description": "Controls how extensions are shared with requesting sites",
-          "additionalProperties": true,
-          "properties": {
-            "default": {
-              "type": "string",
-              "description": "Default sharing posture when no explicit approval exists",
-              "enum": ["allow", "deny"],
-              "default": "deny"
-            },
-            "require_approval": {
-              "type": "boolean",
-              "description": "Require explicit user approval for each extension request",
-              "default": true
-            },
-            "approved_domains": {
-              "type": "array",
-              "description": "Domains pre-approved to receive extensions without prompting",
-              "items": { "type": "string" }
-            },
-            "blocked_domains": {
-              "type": "array",
-              "description": "Domains never allowed to receive any persona data",
-              "items": { "type": "string" }
-            }
-          }
-        },
-        "blocked_topics": {
-          "type": "array",
-          "description": "Topics the AI must refuse to engage with",
-          "items": { "type": "string" }
+        "transparency": {
+          "type": "string",
+          "enum": ["always", "if_asked", "never"],
+          "default": "if_asked",
+          "description": "How the persona handles questions about being an AI"
         },
         "behaviors": {
           "type": "array",
-          "description": "Absolute behavioral rules for AI implementations. Cannot be overridden by user instruction.",
+          "description": "Standard behavior flags",
+          "items": {
+            "type": "string",
+            "enum": ["no_opinions", "no_commitments", "deflect_personal", "stay_on_topic"]
+          }
+        },
+        "custom": {
+          "type": "array",
+          "description": "Freeform rules as plain English strings",
+          "items": { "type": "string" }
+        },
+        "blocked_topics": {
+          "type": "array",
+          "description": "Topics the persona will not discuss",
           "items": { "type": "string" }
         },
         "cta": {
           "type": "string",
-          "description": "Call to action the AI should surface when a visitor expresses genuine interest"
+          "description": "Call to action shown when someone expresses genuine interest in connecting"
+        }
+      }
+    },
+
+    "privacy": {
+      "type": "object",
+      "description": "Field-level privacy controls",
+      "additionalProperties": true,
+      "properties": {
+        "personality_narrative": { "$ref": "#/definitions/privacyLevel" },
+        "professional":          { "$ref": "#/definitions/privacyLevel" },
+        "personal":              { "$ref": "#/definitions/privacyLevel" },
+        "social":                { "$ref": "#/definitions/privacyLevel" },
+        "commerce":              { "$ref": "#/definitions/privacyLevel" },
+        "learning":              { "$ref": "#/definitions/privacyLevel" },
+        "location":              { "$ref": "#/definitions/privacyLevel" },
+        "employer":              { "$ref": "#/definitions/privacyLevel" }
+      }
+    },
+
+    "sharing": {
+      "type": "object",
+      "description": "API access and consent controls",
+      "additionalProperties": true,
+      "properties": {
+        "public_api": {
+          "type": "boolean",
+          "default": true,
+          "description": "Whether the public API is enabled for this persona"
+        },
+        "allowed_scopes": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "allowed_contexts": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/contextValue" }
+        },
+        "blocked_contexts": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/contextValue" }
+        },
+        "blocked_domains": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "require_attribution": {
+          "type": "boolean",
+          "default": true
         }
       }
     },
 
     "extensions": {
       "type": "object",
-      "description": "Optional domain-specific context blocks. Sites request extensions they need. Users approve or deny each request.",
+      "description": "Domain-specific context extensions",
       "additionalProperties": true,
       "properties": {
 
         "professional": {
           "type": "object",
-          "description": "Work history, skills, and career context. Requested by job boards, recruiting platforms, professional networks.",
           "additionalProperties": true,
           "properties": {
-            "availability": {
-              "type": "object",
-              "additionalProperties": true,
-              "properties": {
-                "status": {
-                  "type": "string",
-                  "enum": [
-                    "actively-looking",
-                    "open-to-opportunities",
-                    "not-looking",
-                    "freelance-only",
-                    "employed-not-looking"
-                  ]
-                },
-                "note": { "type": "string" },
-                "preferred_location": { "type": "string" },
-                "preferred_start": { "type": "string", "format": "date" }
-              }
-            },
-            "experience": {
-              "type": "array",
-              "items": {
-                "type": "object",
-                "required": ["title", "company", "start"],
-                "additionalProperties": true,
-                "properties": {
-                  "title": { "type": "string" },
-                  "company": { "type": "string" },
-                  "start": { "type": "string" },
-                  "end": { "type": ["string", "null"] },
-                  "summary": { "type": "string" }
-                }
-              }
-            },
-            "skills": {
-              "type": "array",
-              "items": { "type": "string" }
-            },
-            "stories": {
-              "type": "array",
-              "description": "Key achievements and technical wins with specific measurable detail",
-              "items": {
-                "type": "object",
-                "required": ["title", "summary"],
-                "properties": {
-                  "title": { "type": "string" },
-                  "summary": { "type": "string" }
-                }
-              }
-            },
-            "education": {
-              "type": "array",
-              "items": {
-                "type": "object",
-                "required": ["degree", "school"],
-                "additionalProperties": true,
-                "properties": {
-                  "degree": { "type": "string" },
-                  "school": { "type": "string" },
-                  "year": { "type": "integer" },
-                  "note": { "type": "string" }
-                }
-              }
-            },
-            "projects": {
-              "type": "array",
-              "items": {
-                "type": "object",
-                "required": ["name"],
-                "additionalProperties": true,
-                "properties": {
-                  "name": { "type": "string" },
-                  "url": { "type": ["string", "null"], "format": "uri" },
-                  "summary": { "type": "string" }
-                }
-              }
-            }
+            "role":              { "type": "string" },
+            "company":          { "type": "string" },
+            "industry":         { "type": "string" },
+            "bio":              { "type": "string", "maxLength": 500 },
+            "skills":           { "type": "array", "items": { "type": "string" } },
+            "availability":     { "type": "string", "enum": ["open", "not_looking", "freelance", "closed"] },
+            "preferred_contact":{ "type": "string" }
           }
         },
 
         "personal": {
           "type": "object",
-          "description": "Interests, values, and personality. Requested by social networks, dating platforms, community sites.",
           "additionalProperties": true,
           "properties": {
-            "interests": {
-              "type": "array",
-              "items": { "type": "string" }
-            },
-            "values": {
-              "type": "array",
-              "items": { "type": "string" }
-            },
-            "personality": {
-              "type": "string",
-              "description": "Free text personality description"
-            },
-            "looking_for": {
-              "type": "string",
-              "description": "What the person is seeking in this context"
-            },
-            "deal_breakers": {
-              "type": "array",
-              "items": { "type": "string" }
-            }
+            "interests":                 { "type": "array", "items": { "type": "string" } },
+            "values":                    { "type": "array", "items": { "type": "string" } },
+            "causes":                    { "type": "array", "items": { "type": "string" } },
+            "personality_traits":        { "type": "array", "items": { "type": "string" } },
+            "communication_preferences": { "type": "object", "additionalProperties": true }
           }
         },
 
         "social": {
           "type": "object",
-          "description": "How this person engages online. Requested by news platforms, forums, content platforms.",
           "additionalProperties": true,
           "properties": {
-            "topics_of_interest": {
-              "type": "array",
-              "items": { "type": "string" }
-            },
-            "preferred_content_depth": {
-              "type": "string",
-              "enum": ["surface", "moderate", "deep"]
-            },
-            "engagement_style": {
-              "type": "string"
-            },
-            "content_preferences": {
+            "handles": {
               "type": "object",
               "additionalProperties": true,
               "properties": {
-                "hide_political": { "type": "boolean" },
-                "hide_explicit": { "type": "boolean" },
-                "preferred_formats": {
-                  "type": "array",
-                  "items": { "type": "string" }
-                }
+                "twitter":   { "type": "string" },
+                "linkedin":  { "type": "string" },
+                "github":    { "type": "string" },
+                "instagram": { "type": "string" }
+              }
+            },
+            "availability": {
+              "type": "object",
+              "additionalProperties": true,
+              "properties": {
+                "open_to_meeting":        { "type": "boolean" },
+                "open_to_collaboration":  { "type": "boolean" },
+                "open_to_mentoring":      { "type": "boolean" },
+                "open_to_being_mentored": { "type": "boolean" }
+              }
+            },
+            "communication_style": {
+              "type": "object",
+              "additionalProperties": true,
+              "properties": {
+                "preferred_medium": { "type": "string" },
+                "response_time":    { "type": "string" },
+                "preferred_format": { "type": "string" }
+              }
+            },
+            "conversation_style": {
+              "type": "object",
+              "additionalProperties": true,
+              "properties": {
+                "humor":  { "type": "string", "enum": ["dry", "sarcastic", "playful", "none", "dark", "absurdist"] },
+                "depth":  { "type": "string", "enum": ["small talk", "balanced", "deep diver"] },
+                "energy": { "type": "string", "enum": ["high energy", "measured", "low key"] }
+              }
+            },
+            "topics": {
+              "type": "object",
+              "additionalProperties": true,
+              "properties": {
+                "loves":     { "type": "array", "items": { "type": "string" } },
+                "avoids":    { "type": "array", "items": { "type": "string" } },
+                "expert_in": { "type": "array", "items": { "type": "string" } }
+              }
+            },
+            "persona_to_persona": {
+              "type": "object",
+              "additionalProperties": true,
+              "description": "Context used when two PIF personas interact directly",
+              "properties": {
+                "opener":       { "type": "string" },
+                "ask_me_about": { "type": "array", "items": { "type": "string" } },
+                "looking_for":  { "type": "array", "items": { "type": "string" } }
               }
             }
           }
@@ -373,81 +259,23 @@
 
         "commerce": {
           "type": "object",
-          "description": "Purchasing preferences. Requested by e-commerce platforms, recommendation engines.",
           "additionalProperties": true,
           "properties": {
-            "budget_range": {
-              "type": "string",
-              "enum": ["budget", "mid", "mid-to-high", "high", "luxury"]
-            },
-            "preferred_brands": {
-              "type": "array",
-              "items": { "type": "string" }
-            },
-            "avoid_brands": {
-              "type": "array",
-              "items": { "type": "string" }
-            },
-            "sizes": {
-              "type": "object",
-              "additionalProperties": true
-            },
-            "preferences": {
-              "type": "array",
-              "items": { "type": "string" }
-            },
-            "consent_to_ads": {
-              "type": "boolean",
-              "default": false
-            }
-          }
-        },
-
-        "health": {
-          "type": "object",
-          "description": "Accessibility and communication needs. Requested by healthcare portals, wellness platforms. Medical history is out of scope for v1.0.",
-          "additionalProperties": true,
-          "properties": {
-            "accessibility_needs": {
-              "type": "array",
-              "items": { "type": "string" }
-            },
-            "communication_preferences": {
-              "type": "object",
-              "additionalProperties": true,
-              "properties": {
-                "preferred_format": { "type": "string" },
-                "avoid_jargon": { "type": "boolean" },
-                "preferred_reading_level": { "type": "string" }
-              }
-            }
+            "buying_preferences": { "type": "array", "items": { "type": "string" } },
+            "brands":             { "type": "array", "items": { "type": "string" } },
+            "budget_range":       { "type": "string" },
+            "shopping_style":     { "type": "string" }
           }
         },
 
         "learning": {
           "type": "object",
-          "description": "Learning context. Requested by education platforms, course sites, documentation tools.",
           "additionalProperties": true,
           "properties": {
-            "current_knowledge": {
-              "type": "object",
-              "description": "Topic to level pairs",
-              "additionalProperties": {
-                "type": "string",
-                "enum": ["beginner", "intermediate", "advanced", "expert"]
-              }
-            },
-            "learning_style": {
-              "type": "string"
-            },
-            "goals": {
-              "type": "array",
-              "items": { "type": "string" }
-            },
-            "preferred_pace": {
-              "type": "string",
-              "enum": ["structured", "self-directed", "cohort"]
-            }
+            "current_topics":  { "type": "array", "items": { "type": "string" } },
+            "learning_style":  { "type": "string" },
+            "experience_level":{ "type": "object", "additionalProperties": true },
+            "credentials":     { "type": "array", "items": { "type": "string" } }
           }
         }
 
@@ -455,40 +283,69 @@
     },
 
     "modes": {
-      "type": "array",
-      "description": "Named personas for different contexts. Each mode inherits the full file and overrides specific fields.",
-      "items": {
-        "type": "object",
-        "required": ["id", "label", "active"],
-        "additionalProperties": true,
-        "properties": {
-          "id": {
-            "type": "string",
-            "description": "Unique identifier for this mode",
-            "pattern": "^[a-z0-9-]+$"
-          },
-          "label": {
-            "type": "string",
-            "description": "Human readable name"
-          },
-          "description": {
-            "type": "string",
-            "description": "What this mode is for"
-          },
-          "active": {
-            "type": "boolean",
-            "description": "Whether this mode is currently active"
-          },
-          "allowed_extensions": {
-            "type": "array",
-            "description": "Which extensions sites may request when this mode is active",
-            "items": { "type": "string" }
-          },
-          "overrides": {
-            "type": "object",
-            "description": "Dot-notation field overrides applied when this mode is active",
-            "additionalProperties": true
-          }
+      "type": "object",
+      "description": "Named configuration presets",
+      "additionalProperties": {
+        "$ref": "#/definitions/mode"
+      },
+      "properties": {
+        "default":      { "$ref": "#/definitions/mode" },
+        "professional": { "$ref": "#/definitions/mode" },
+        "social":       { "$ref": "#/definitions/mode" },
+        "minimal":      { "$ref": "#/definitions/mode" },
+        "full":         { "$ref": "#/definitions/mode" }
+      }
+    }
+
+  },
+
+  "definitions": {
+
+    "privacyLevel": {
+      "type": "string",
+      "enum": ["public", "authenticated", "private"]
+    },
+
+    "contextValue": {
+      "type": "string",
+      "enum": [
+        "general",
+        "professional",
+        "job_application",
+        "networking",
+        "social",
+        "dating",
+        "customer_support",
+        "education",
+        "creative",
+        "commerce"
+      ]
+    },
+
+    "mode": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "active_extensions": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "override_tone": {
+          "oneOf": [
+            { "type": "null" },
+            { "type": "string", "enum": ["Casual", "Professional", "Formal", "Playful", "Direct", "Warm"] }
+          ]
+        },
+        "override_style": {
+          "oneOf": [
+            { "type": "null" },
+            { "type": "string", "enum": ["Concise", "Detailed", "Storyteller", "Analytical", "Conversational"] }
+          ]
+        },
+        "privacy_level": { "$ref": "#/definitions/privacyLevel" },
+        "custom_rules": {
+          "type": "array",
+          "items": { "type": "string" }
         }
       }
     }

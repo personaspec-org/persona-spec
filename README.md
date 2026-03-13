@@ -1,119 +1,176 @@
-# Persona Spec
+# Persona Interchange Format (PIF)
 
-> The open standard for portable AI personas.
+**An open standard for portable AI identity.**
 
-## What is a `.persona` file?
+---
 
-A `.persona` file is a structured, portable representation of a person — their identity, voice, values, and rules for how they want to be represented across the internet.
+Every AI starts from zero. You explain yourself to every chatbot, every recommendation engine, every personalization system. Every single time.
 
-Think of it like a Gmail account, but for your identity. You create it once, and it works everywhere.
+PIF fixes that at the protocol level. A `.persona` file travels with you. Any AI-powered platform that supports PIF can understand who you are — your voice, your interests, your preferences, your rules — instantly, with your consent.
 
-## The Problem
+**Build your persona once. Every AI that meets you already knows you.**
 
-The web knows you as a cookie. A device fingerprint. A demographic guess. Every platform makes you rebuild your profile from scratch. Every AI tool starts with zero context about who you are.
+→ [personaspec.com](https://personaspec.com) — build and host your persona  
+→ [personaspec.org](https://personaspec.org) — full specification and documentation
 
-There is no standard for a person to declare who they are, how they communicate, and how they want to be represented — across the entire web.
-
-## The Solution
-
-A `.persona` file is that standard.
-
-- **You own it** — it lives on your device, not on a platform
-- **You control it** — sites request access, you approve or deny per extension
-- **It travels with you** — import it anywhere that supports the spec
-- **It works with AI** — any AI system can load your persona and represent you accurately
-- **It works for any context** — job searching, social, commerce, dating, education, and beyond
-
-## Structure
-
-The spec has two layers:
-
-**Core** — universal fields every `.persona` file contains:
-- `identity` — who you are
-- `voice` — how you communicate
-- `rules` — what you share and what you don't
-
-**Extensions** — optional domain-specific blocks sites can request:
-- `professional` — work history, skills, availability
-- `personal` — interests, values, personality
-- `social` — content preferences, engagement style
-- `commerce` — purchasing preferences
-- `learning` — knowledge level, learning goals
-- Custom extensions for any domain
+---
 
 ## What it looks like
 
 ```json
 {
   "version": "1.0",
-  "meta": {
-    "id": "alex-rivera",
-    "created": "2026-01-01",
-    "visibility": "public"
-  },
   "identity": {
-    "name": "Alex Rivera",
-    "location": "Austin, TX",
-    "tagline": "Building things that matter",
-    "language": "en"
+    "name": "Alex Chen",
+    "tagline": "Product designer who codes",
+    "location": "San Francisco, CA"
   },
   "voice": {
-    "tone": "direct, warm, curious",
-    "style": "conversational, no corporate speak"
+    "tone": "Casual",
+    "style": "Concise",
+    "examples": [
+      {
+        "prompt": "tell me about yourself",
+        "response": "I design products and write just enough code to be dangerous."
+      }
+    ]
   },
   "rules": {
-    "privacy": {
-      "hide_phone": true,
-      "hide_system_prompt": true
-    },
-    "sharing": {
-      "default": "deny",
-      "require_approval": true
-    }
+    "transparency": "if_asked",
+    "behaviors": ["no_commitments", "deflect_personal"]
   },
   "extensions": {
-    "professional": {
-      "availability": { "status": "actively-looking" },
-      "skills": ["Go", "Python", "Kubernetes"]
+    "personal": {
+      "interests": ["Design systems", "Photography", "Coffee"]
     }
   }
 }
 ```
 
-See the [full spec](SPEC.md), a [minimal example](examples/minimal.persona), and a [complete example](examples/full.persona).
-
-## How it gets used
-
-**Personal websites** — import your `.persona` and get an AI chatbot that answers as you
-
-**Browser extension** — your persona travels with you as you browse, auto-filling forms and declaring your identity to AI-powered sites on your terms
-
-**Job applications** — auto-fill applications and professional profiles from your `professional` extension
-
-**AI tools** — load your persona so any AI tool instantly knows your context without re-explaining yourself every time
-
-**Any platform** — sites request the extensions they need, you approve what gets shared
-
-## Implementations
-
-| Project | Type | URL |
-|---------|------|-----|
-| personaspec.com | Hosted persona builder + chatbot platform | Coming soon |
-
-Built something with persona-spec? Open a PR to add it here.
-
-## Spec version
-
-Current: `1.0`
-
-## Contributing
-
-See [CONTRIBUTING.md](CONTRIBUTING.md). The spec is open — tooling, validators, importers, and example personas are all welcome contributions.
-
-## License
-
-MIT — the spec is free to use, implement, and build on.
+That's a `.persona` file. A structured, portable, user-owned identity file that any AI system can read.
 
 ---
 
-*[personaspec.org](https://personaspec.org) · [hello@personaspec.com](mailto:hello@personaspec.com)*
+## For developers
+
+### One API call. Ready-to-use system prompt.
+
+```bash
+GET https://personaspec.com/api/v1/alex-chen?format=prompt
+```
+
+Returns:
+
+```
+You are an AI persona representing Alex Chen, a product designer
+who codes based in San Francisco, CA.
+Tone: Casual. Style: Concise.
+When asked "tell me about yourself" they responded: "I design
+products and write just enough code to be dangerous."
+Interests: Design systems, Photography, Coffee.
+If sincerely asked whether you are an AI, acknowledge it honestly.
+Only state facts explicitly present in this prompt.
+Deflect anything not covered naturally in character.
+You are not a generic assistant. You are Alex Chen.
+```
+
+Drop that string directly into your system prompt. Your AI now knows exactly who it's talking to.
+
+### With context
+
+```bash
+GET https://personaspec.com/api/v1/alex-chen
+  ?format=prompt
+  &mode=professional
+  &context=job_application
+  &platform=YourJobBoard
+  &audience=senior design recruiters
+```
+
+The same persona, tailored to the context your platform provides.
+
+### Standard context values
+
+`general` `professional` `job_application` `networking` `social` `dating` `customer_support` `education` `creative` `commerce`
+
+### Response codes
+
+| Code | Meaning |
+|------|---------|
+| `200` | Success |
+| `404` | Not found or deleted — purge any cached data |
+| `403` | Public API disabled by persona owner |
+| `429` | Rate limited — 100 requests/hour unauthenticated |
+
+---
+
+## Why implement PIF?
+
+**For your users** — they arrive already personalized. No onboarding friction. No re-explaining themselves. The AI knows them from message one.
+
+**For your product** — personalized experiences convert and retain better. A user who brought their persona is a more invested user.
+
+**For the ecosystem** — PIF is an open standard. Implementing it signals that your platform respects user data ownership and portability. That matters to the users who care most about privacy.
+
+---
+
+## Security requirements
+
+Implementations must:
+
+- **Request only necessary scopes** — don't request professional data for a recipe site
+- **Cache for max 24 hours** — personas change, respect updates
+- **Never train on persona data** — it's for runtime personalization only
+- **Respect deletion** — `404` means the user deleted their persona, purge within 48 hours
+- **Disclose usage** — tell your users their PersonaSpec persona is being used
+- **Honor revocation immediately** — OAuth tokens invalidated on revocation
+
+---
+
+## File format
+
+| Property | Value |
+|----------|-------|
+| Extension | `.persona` |
+| MIME type | `application/persona+json` |
+| Encoding | UTF-8 |
+| Format | JSON |
+
+---
+
+## Versioning
+
+Minor versions (1.0 → 1.1) are always backwards compatible. New fields are always optional. **Implementations must silently ignore unknown fields.**
+
+Major versions (1.0 → 2.0) may introduce breaking changes with a minimum 24 month notice period.
+
+---
+
+## Examples
+
+- [`examples/minimal.persona`](examples/minimal.persona) — identity and voice only
+- [`examples/full.persona`](examples/full.persona) — all extensions populated
+
+---
+
+## Full specification
+
+→ [SPEC.md](SPEC.md)
+
+---
+
+## Contributing
+
+PIF is an open standard. Issues, proposals, and pull requests are welcome.
+
+- Open an issue to propose a new extension or field
+- Submit a PR with schema changes — all additions must be backwards compatible
+- Let us know you've implemented PIF so we can add you to the ecosystem list
+
+---
+
+## License
+
+MIT — free to implement in any product, commercial or otherwise.
+
+© 2026 PersonaSpec — [personaspec.org](https://personaspec.org)
